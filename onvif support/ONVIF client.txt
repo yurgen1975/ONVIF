@@ -1,0 +1,69 @@
+rtsp://admin:123456@192.168.40.201/profile1
+
+
+
+----CAM B7---
+CAM IP: 172.17.236.109
+USER: admin
+PASSWORD: rad12345
+-------------
+
+
+onvif-cli devicemgmt GetHostname --user 'admin' --password '123456' --host '192.168.40.201' --port 80
+
+onvif-cli -u 'admin' -a '123456' --host '192.168.40.201' --port 80 --wsdl /etc/onvif/wsdl/
+
+
+
+=========== Alpine ==========
+
+# working python module: onvif-zeep 0.2.12
+
+apk add python3 py3-pip py3-lxml
+
+pip3 install onvif-zeep
+
+mkdir /etc/onvif
+cp -r /usr/lib/python3.7/site-packages/wsdl/ /etc/onvif/
+
+=============================
+
+=========== Ubuntu ==========
+
+# working python module: onvif-zeep 0.2.12
+
+apt install python3 python3-pip python3-lxml
+
+pip3 install onvif-zeep
+
+mkdir /etc/onvif
+cp -r /usr/lib/python3.7/site-packages/wsdl/ /etc/onvif/
+
+=============================
+
+
+
+
+
+Example
+============================================================================================
+from onvif import ONVIFCamera
+mycam = ONVIFCamera('192.168.40.201', 80, 'admin', '123456', '/etc/onvif/wsdl/')
+
+#print(mycam.devicemgmt.GetHostname())
+
+media_service = mycam.create_media_service()
+profiles = media_service.GetProfiles()
+for profile in profiles:
+    token = profile.token
+    obj = media_service.create_type('GetStreamUri')
+    obj.ProfileToken = token
+    obj.StreamSetup = {'Stream': 'RTP-Unicast', 'Transport': {'Protocol': 'RTSP'}}
+    stream_uri = media_service.GetStreamUri(obj)
+    print(stream_uri['Uri'])
+    print("Encoding: ", profile.VideoEncoderConfiguration.Encoding)
+    print("Resolution: ", profile.VideoEncoderConfiguration.Resolution.Width, "x", profile.VideoEncoderConfiguration.Resolution.Height)
+    print("Frame rate: ", profile.VideoEncoderConfiguration.RateControl.FrameRateLimit, "fps")
+    print("Bit rate: ", profile.VideoEncoderConfiguration.RateControl.BitrateLimit, "kbps")
+
+
